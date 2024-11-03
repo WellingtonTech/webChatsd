@@ -1,1 +1,4 @@
--Frontend does not work(deleted test, index, App.css )
+Frontend, Backend Works properly
+
+-Add functionality
+-Add database
