@@ -2,32 +2,28 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
+
+	"backend/pkg/websocket"
 )
 
 // define upgrader
 // Read and Write buffer size
 func serveWs(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.Host)
-
-	ws, err := upgrader.Upgrade(w, r, nil)
+	ws, err := websocket.Upgrade(w, r)
 	if err != nil {
-		log.Println(err)
+		fmt.Fprintf(w, "%+V\n", err)
 	}
-	reader(ws)
+	go websocket.Writer(ws)
+	websocket.Reader(ws)
 }
 
 func setupRoutes() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Simple Server")
-	})
-
 	http.HandleFunc("/ws", serveWs)
 }
 
 func main() {
-	fmt.Printf("Server start at localhos:8080")
+	fmt.Printf("Server start at localhost:8080")
 	setupRoutes()
 	http.ListenAndServe(":8080", nil)
 }
