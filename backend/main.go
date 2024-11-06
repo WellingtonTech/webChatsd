@@ -9,21 +9,33 @@ import (
 
 // define upgrader
 // Read and Write buffer size
-func serveWs(w http.ResponseWriter, r *http.Request) {
-	ws, err := websocket.Upgrade(w, r)
+func serveWs(pool *websocket.Pool, w http.ResponseWriter, r *http.Request) {
+	fmt.Println("WebSocket Endpoint Hit")
+	conn, err := websocket.Upgrade(w, r)
 	if err != nil {
-		fmt.Fprintf(w, "%+V\n", err)
+		fmt.Println(w, "%+v\n", err)
 	}
-	go websocket.Writer(ws)
-	websocket.Reader(ws)
+
+	client := &websocket.Client{
+		Conn: conn,
+		Pool: pool,
+	}
+
+	pool.Register <- client
+	client.Read()
 }
 
 func setupRoutes() {
-	http.HandleFunc("/ws", serveWs)
+	pool := websocket.NewPool()
+	go pool.Start()
+
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		serveWs(pool, w, r)
+	})
 }
 
 func main() {
-	fmt.Printf("Server start at localhost:8080")
+	fmt.Printf("Server start at localhost:3000")
 	setupRoutes()
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":3000", nil)
 }
